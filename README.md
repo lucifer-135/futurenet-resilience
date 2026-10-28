@@ -105,6 +105,10 @@ These outputs come from ns-3.46.1 (`default` build profile, seed 1) in WSL2 Ubun
 
 ![Scheduled example output](doc/images/example-scheduled.png)
 
+The same two runs plotted from `<prefix>-throughput.csv`. The red band is the outage. The small zigzag is 12 or 13 packets of 1000 bytes landing in each 100 ms sample.
+
+![Throughput with and without backup path](doc/images/throughput-v1.png)
+
 **Random example:** a 30-node grid with 20 randomly failing links, plus the start of the event CSV.
 
 ![Random example output](doc/images/example-random.png)
