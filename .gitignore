@@ -1,0 +1,8 @@
+# Simulation output (regenerate with the examples / tools)
+*.csv
+*.png
+resilience-validation/
+
+# Python
+__pycache__/
+*.pyc
