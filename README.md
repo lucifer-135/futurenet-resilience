@@ -93,6 +93,26 @@ The examples write these output files:
 
 For plots and validation sweeps, see [tools/](tools/).
 
+## Sample output
+
+These outputs come from ns-3.46.1 (`default` build profile, seed 1) in WSL2 Ubuntu. The runs used `--outputPrefix` to write files into a separate folder, and the commands below are shown with the default prefix.
+
+**Tests:** all 9 test cases pass.
+
+![Test results](doc/images/tests.png)
+
+**Scheduled example (V1):** with the backup path, traffic reroutes and the longest gap is 0.011 s. Without the backup path, traffic stops for the whole 5 s outage.
+
+![Scheduled example output](doc/images/example-scheduled.png)
+
+**Random example:** a 30-node grid with 20 randomly failing links, plus the start of the event CSV.
+
+![Random example output](doc/images/example-random.png)
+
+**Validation (V2/V3):** a longer mean outage gives lower availability. The boundary cases match the closed-form values.
+
+![Validation summary](doc/images/validation.png)
+
 ## SRS traceability
 
 | Requirement | Where |

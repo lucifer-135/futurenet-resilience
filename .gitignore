@@ -1,6 +1,7 @@
 # Simulation output (regenerate with the examples / tools)
 *.csv
 *.png
+!doc/images/*.png
 resilience-validation/
 
 # Python
