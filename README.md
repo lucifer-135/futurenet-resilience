@@ -19,28 +19,98 @@ The module does **not** add a routing protocol. Rerouting is done by standard ns
 - Examples also need: `point-to-point`, `applications`, `flow-monitor`
 - Optional plots: Python 3 with `matplotlib`
 
-## Build
+## How to run (ns-3.46.1 already installed)
 
 Use Linux or WSL2 Ubuntu. The native Windows build of ns-3 is experimental.
+All commands after step 1 run from the ns-3 root folder (the folder that contains the `ns3` script).
+
+### 1. Put the module in `contrib/`
 
 ```bash
-sudo apt install g++ cmake ninja-build python3 git
-wget https://www.nsnam.org/releases/ns-allinone-3.46.1.tar.bz2
-tar xjf ns-allinone-3.46.1.tar.bz2
-cp -r futurenet-resilience ns-allinone-3.46.1/ns-3.46.1/contrib/
-cd ns-allinone-3.46.1/ns-3.46.1
+cd ~/ns-allinone-3.46.1/ns-3.46.1        # change this to your ns-3 path
+git clone https://github.com/lucifer-135/futurenet-resilience.git contrib/futurenet-resilience
+```
+
+The folder name must be exactly `contrib/futurenet-resilience`. Do not change ns-3 itself.
+
+### 2. Configure
+
+```bash
 ./ns3 configure --enable-examples --enable-tests \
     --enable-modules="futurenet-resilience;point-to-point;applications;flow-monitor"
+```
+
+`--enable-modules` builds only what this project needs, which is much faster than building all of ns-3. Remove that flag to build everything.
+Check the module list at the end of the output. `futurenet-resilience` must be in "Modules configured to be built".
+
+### 3. Build
+
+```bash
 ./ns3 build
 ```
 
-`--enable-modules` only builds what this project needs, which is much faster than building all of ns-3. Drop that flag to build everything.
+The first build takes some minutes. The build must finish with no errors.
 
-## Run the tests
+### 4. Run the tests
 
 ```bash
 ./test.py --suite=futurenet-resilience
 ```
+
+Expected result: `1 of 1 tests passed` (the suite has 9 test cases). Add `--verbose` to see each case.
+
+### 5. Run the examples
+
+```bash
+./ns3 run resilience-example-scheduled
+./ns3 run "resilience-example-scheduled --enableBackup=false"
+./ns3 run resilience-example-random
+```
+
+Expected results (seed 1):
+
+| Command | Key output |
+|---|---|
+| `resilience-example-scheduled` | `Link disruption (s): 5`, `Longest traffic gap (s): 0.010824` |
+| `... --enableBackup=false` | `Longest traffic gap (s): 5.008` |
+| `resilience-example-random` | `Nodes / managed links: 30 / 20`, `Availability: 0.919167 (expected 0.909091)` |
+
+Put the arguments and the example name in one pair of quotes. Use `--PrintHelp` to see all options:
+
+```bash
+./ns3 run "resilience-example-random --PrintHelp"
+```
+
+### 6. Look at the output files
+
+The examples write CSV files into the ns-3 root folder:
+
+```bash
+cat resilience-scheduled-events.csv
+head -5 resilience-random-events.csv
+```
+
+Use `--outputPrefix=<folder>/<name>` to write the files to a different place.
+
+### 7. Optional: plots and validation
+
+These need Python 3 with `matplotlib` (`sudo apt install python3-matplotlib`).
+
+```bash
+python3 contrib/futurenet-resilience/tools/plot-throughput.py resilience-scheduled
+bash contrib/futurenet-resilience/tools/run-validation.sh
+```
+
+The first command writes `resilience-scheduled-throughput.png` from the last scheduled run. Each run overwrites the CSV files of the previous run with the same prefix. The second command runs validation cases V1 to V3 and writes the results into `resilience-validation/`.
+
+### Common problems
+
+| Problem | Fix |
+|---|---|
+| `resilience-example-...` is not found | Run step 2 again with `--enable-examples`, then `./ns3 build`. |
+| `test.py` does not find the suite | Run step 2 again with `--enable-tests`, then `./ns3 build`. |
+| `futurenet-resilience` is not in the module list | Check the folder name: `contrib/futurenet-resilience`. |
+| Files have `\r` errors after a copy from Windows | Clone with git inside Linux/WSL. Do not copy the folder from Windows. |
 
 ## Basic usage
 
