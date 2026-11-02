@@ -98,10 +98,13 @@ These need Python 3 with `matplotlib` (`sudo apt install python3-matplotlib`).
 
 ```bash
 python3 contrib/futurenet-resilience/tools/plot-throughput.py resilience-scheduled
+python3 contrib/futurenet-resilience/tools/plot-random.py resilience-random
 bash contrib/futurenet-resilience/tools/run-validation.sh
 ```
 
-The first command writes `resilience-scheduled-throughput.png` from the last scheduled run. Each run overwrites the CSV files of the previous run with the same prefix. The second command runs validation cases V1 to V3 and writes the results into `resilience-validation/`.
+- `plot-throughput.py` writes `resilience-scheduled-throughput.png` from the last scheduled run. Each run overwrites the CSV files of the previous run with the same prefix.
+- `plot-random.py` writes `resilience-random-outages.png`: one row per managed link with a red bar for each outage, and the number of links down over time.
+- `run-validation.sh` runs validation cases V1 to V3 and writes the results into `resilience-validation/`.
 
 ### Common problems
 
@@ -139,6 +142,8 @@ resilience.SetAvailabilityModel("ns3::TwoStateAvailabilityModel",
 ```
 
 To fail a whole node (FR-09), use `resilience.InstallOnNode(node, model)`.
+
+Give each controller its own model object. A model has only one listener, so passing the same model to a second `Install` call stops the simulation with an error. Outages added with `AddDownInterval` must not overlap.
 
 ## Examples
 
@@ -182,7 +187,6 @@ The same two runs plotted from `<prefix>-throughput.csv`. The red band is the ou
 **Random example:** a 30-node grid with 20 randomly failing links, plus the start of the event CSV.
 
 ![Random example output](doc/images/example-random.png)
-
 **Validation (V2/V3):** a longer mean outage gives lower availability. The boundary cases match the closed-form values.
 
 ![Validation summary](doc/images/validation.png)
@@ -206,6 +210,8 @@ The same two runs plotted from `<prefix>-throughput.csv`. The red band is the ou
 - **Supported devices:** this works on any NetDevice that has its own IPv4 interface, such as point-to-point, CSMA or SimpleNetDevice, because failure is done with `Ipv4::SetDown`. The examples and tests use point-to-point and SimpleNetDevice only.
 - **Shared media:** on CSMA or Wi-Fi, setting one interface down cuts that node off from *every* neighbor on the medium. Pairwise failure on a shared wireless medium is **not supported**.
 - **Not implemented:** the DEGRADED state (FR-08, R) and correlated/regional failures (FR-10, O).
+- **One model per controller:** a model object cannot drive several controllers. Correlated failures need one model per controller.
+- **No overlapping scheduled outages:** the scheduled model applies state changes in time order and does not merge intervals, so the end of the earlier-ending interval brings the link up.
 - **IPv4 only:** IPv6 interfaces are not touched.
 - **Unreachable addresses:** a packet sent to an address on a failed interface is unreachable even if the node is reachable by another path. The examples address sinks on links that never fail.
 - **Recovery delay:** this is modeled only as extra time before `SetUp()`. Routing convergence time comes from the routing protocol. Global routing converges instantly, while RIP or OLSR would show real convergence delay.
