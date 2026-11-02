@@ -146,11 +146,11 @@ These were produced with ns-3.46.1, the `default` build profile, seed 1, and `to
 | V3 p = q = 1 | Availability 0.500 (expected 0.500), delivery ratio 0.749 |
 | Closed-form check, one 20 000 s run (`--simulationTime=20000s --numFlows=1 --appRate=1kbps`) | 3600 failures, mean outage 10.07 s (expected 10), availability 0.9094 (expected 0.9091) |
 
-The short V2 runs are about 10% below the expected outage in every row. That is sampling noise, not bias: every q value reuses the same streams (runs 1–5), so their errors are correlated. The long run agrees with the closed form to within 1%.
+The short V2 runs are about 10% below the expected outage in every row. Most of this is sampling noise: every q value reuses the same streams (runs 1–5), so their errors are correlated. A small part comes from outages that are still open at the end of a run; they are counted with their length up to that point, which lowers the mean a little. The long run agrees with the closed form to within 1%.
 
 ## 7. Extension points
 
-- **New failure model:** subclass `LinkAvailabilityModel`, implement `DoStart()` and `GetNextStateChange()`, and call `SetState()`. Override `AssignStreams()` if the model is random. Examples are trace-driven failures, or correlated/regional failures (FR-10), where one model drives several controllers.
+- **New failure model:** subclass `LinkAvailabilityModel`, implement `DoStart()` and `GetNextStateChange()`, and call `SetState()`. Override `AssignStreams()` if the model is random. Examples are trace-driven failures, or correlated/regional failures (FR-10). A model has only one listener, so one model object cannot drive several controllers. For correlated failures, give each controller its own model and let the models share one source of failure times.
 - **External control (M10 Agent):** call `FailureController::ApplyState()` directly, with no model set. The collector reports the cause as `manual`.
 - **DEGRADED state (FR-08):** add a `DEGRADED` value to `LinkAvailability`. The controller would then attach a `ReceiveErrorModel` (for example `RateErrorModel` with `DegradedLossRatio`) to the managed devices instead of calling `SetDown`.
 - **Routing with convergence delay:** the examples use global routing, which recomputes routes instantly. Replace it with `RipHelper` or `OlsrHelper` to observe real convergence time. The module itself does not change.

@@ -166,6 +166,9 @@ ResilienceMetricsCollector::WriteCsvRow(uint32_t linkIndex,
         return;
     }
     double disruptionMs = disruption.GetSeconds() * 1000.0;
+    // The first 10 columns are the common FutureNet format, the last 4 are the
+    // M04 columns from the SRS. The disruption is written twice on purpose:
+    // as the common value1 (unit ms) and as the SRS column disruption_ms.
     // peer_id, flow_id and value2 do not apply to link events and stay empty.
     m_csv << Simulator::Now().GetSeconds() << ",resilience," << event << "," << nodeId << ",,,"
           << disruptionMs << ",,ms,link=" << linkIndex << "," << interfaceId << "," << state << ","

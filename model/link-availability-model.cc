@@ -83,6 +83,11 @@ LinkAvailabilityModel::AssignStreams(int64_t /* stream */)
 void
 LinkAvailabilityModel::SetStateChangeCallback(StateChangeCallback cb)
 {
+    // A model has a single listener. Without this check a second controller
+    // would silently take the model over from the first one.
+    NS_ABORT_MSG_IF(!cb.IsNull() && !m_stateChangeCallback.IsNull(),
+                    "This LinkAvailabilityModel already drives another FailureController. "
+                    "Create one model object per controller.");
     m_stateChangeCallback = cb;
 }
 

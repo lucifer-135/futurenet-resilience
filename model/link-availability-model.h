@@ -95,6 +95,10 @@ class LinkAvailabilityModel : public Object
 
     /**
      * @brief Set the callback notified when the state changes.
+     *
+     * A model has exactly one listener, so one model cannot drive two
+     * controllers. Setting a second non-null callback aborts; clear the old
+     * one first with a null callback.
      * @param cb the callback
      */
     void SetStateChangeCallback(StateChangeCallback cb);

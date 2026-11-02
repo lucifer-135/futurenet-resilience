@@ -37,6 +37,10 @@ class ScheduledAvailabilityModel : public LinkAvailabilityModel
 
     /**
      * @brief Fail the link at @p start and recover it @p duration later.
+     *
+     * Intervals must not overlap. The model applies single state changes in
+     * time order and does not merge intervals, so the end of the earlier-ending
+     * interval brings the link up even if another interval is still open.
      * @param start absolute simulation time of the failure
      * @param duration outage length, must be strictly positive
      */
