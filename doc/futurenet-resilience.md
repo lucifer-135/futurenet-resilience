@@ -130,8 +130,9 @@ All runs record the seed and run number in `<prefix>-summary.csv`. Report them t
 | V2 vary one parameter (SRS V2) | `resilience-example-random --recoveryProbability=q` for q = 0.2, 0.1, 0.05 and runs 1–5 | The mean outage grows (expected 5, 10 and 20 s) and availability falls toward `q/(p+q)`. |
 | V3 boundary | `resilience-example-random --failureProbability=0` | 0 failures and availability 1. |
 | V3 boundary | `resilience-example-random --failureProbability=1 --recoveryProbability=1` | The links flap at every evaluation and availability is about 0.5. |
+| V4 other link set | `resilience-example-vertical` | The same 30-node grid, but 15 vertical links fail (p = 0.02, q = 0.2). The mean outage is near 5 s and availability is near 0.909. |
 
-The automated tests cover T1–T5 and T6. T6 is an integration test with the real `Ipv4` model, in SRS-T02 and FR-09.
+The automated tests cover T1–T5 and T6. T6 is an integration test with the real `Ipv4` model, in SRS-T02 and FR-09. Test T10 checks the outage length in the boundary case q = 1: every outage must last exactly one `EvaluationInterval`, which is the expected mean `T/q`. It also checks `GetSteadyStateAvailability()` against `q/(p+q)`.
 
 ### Reference results
 
@@ -144,6 +145,7 @@ These were produced with ns-3.46.1, the `default` build profile, seed 1, and `to
 | V2 q = 0.2 / 0.1 / 0.05 (5 runs each) | Mean outage 4.38 / 8.94 / 17.24 s (expected 5 / 10 / 20 s). Availability 0.958 / 0.919 / 0.853 (expected 0.952 / 0.909 / 0.833) |
 | V3 p = 0 | 0 failures, availability 1.000 |
 | V3 p = q = 1 | Availability 0.500 (expected 0.500), delivery ratio 0.749 |
+| V4 `resilience-example-vertical` | 77 failures, mean outage 4.84 s (expected 5), availability 0.917 (expected 0.909), delivery ratio 1 |
 | Closed-form check, one 20 000 s run (`--simulationTime=20000s --numFlows=1 --appRate=1kbps`) | 3600 failures, mean outage 10.07 s (expected 10), availability 0.9094 (expected 0.9091) |
 
 The short V2 runs are about 10% below the expected outage in every row. Most of this is sampling noise: every q value reuses the same streams (runs 1–5), so their errors are correlated. A small part comes from outages that are still open at the end of a run; they are counted with their length up to that point, which lowers the mean a little. The long run agrees with the closed form to within 1%.

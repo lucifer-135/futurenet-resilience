@@ -57,7 +57,7 @@ The first build takes some minutes. The build must finish with no errors.
 ./test.py --suite=futurenet-resilience
 ```
 
-Expected result: `1 of 1 tests passed` (the suite has 9 test cases). Add `--verbose` to see each case.
+Expected result: `1 of 1 tests passed` (the suite has 10 test cases). Add `--verbose` to see each case.
 
 ### 5. Run the examples
 
@@ -65,6 +65,7 @@ Expected result: `1 of 1 tests passed` (the suite has 9 test cases). Add `--verb
 ./ns3 run resilience-example-scheduled
 ./ns3 run "resilience-example-scheduled --enableBackup=false"
 ./ns3 run resilience-example-random
+./ns3 run resilience-example-vertical
 ```
 
 Expected results (seed 1):
@@ -74,6 +75,7 @@ Expected results (seed 1):
 | `resilience-example-scheduled` | `Link disruption (s): 5`, `Longest traffic gap (s): 0.010824` |
 | `... --enableBackup=false` | `Longest traffic gap (s): 5.008` |
 | `resilience-example-random` | `Nodes / managed links: 30 / 20`, `Availability: 0.919167 (expected 0.909091)` |
+| `resilience-example-vertical` | `Nodes / managed links: 30 / 15 (vertical)`, `Availability: 0.917111 (expected 0.909091)` |
 
 Put the arguments and the example name in one pair of quotes. Use `--PrintHelp` to see all options:
 
@@ -88,6 +90,7 @@ The examples write CSV files into the ns-3 root folder:
 ```bash
 cat resilience-scheduled-events.csv
 head -5 resilience-random-events.csv
+head -5 resilience-vertical-events.csv
 ```
 
 Use `--outputPrefix=<folder>/<name>` to write the files to a different place.
@@ -99,11 +102,12 @@ These need Python 3 with `matplotlib` (`sudo apt install python3-matplotlib`).
 ```bash
 python3 contrib/futurenet-resilience/tools/plot-throughput.py resilience-scheduled
 python3 contrib/futurenet-resilience/tools/plot-random.py resilience-random
+python3 contrib/futurenet-resilience/tools/plot-random.py resilience-vertical
 bash contrib/futurenet-resilience/tools/run-validation.sh
 ```
 
 - `plot-throughput.py` writes `resilience-scheduled-throughput.png` from the last scheduled run. Each run overwrites the CSV files of the previous run with the same prefix.
-- `plot-random.py` writes `resilience-random-outages.png`: one row per managed link with a red bar for each outage, and the number of links down over time.
+- `plot-random.py` writes `<prefix>-outages.png`: one row per managed link with a red bar for each outage, and the number of links down over time. It works for both grid examples.
 - `run-validation.sh` runs validation cases V1 to V3 and writes the results into `resilience-validation/`.
 
 ### Common problems
@@ -151,12 +155,16 @@ Give each controller its own model object. A model has only one listener, so pas
 |---|---|---|---|
 | `resilience-example-scheduled` | example-basic | example-scheduled | 4 nodes, two paths. The primary link fails at 10 s for 5 s and traffic reroutes. |
 | `resilience-example-random` | example-advanced | example-random | A 6×5 grid (30 nodes) with 20 randomly failing links. Prints availability and disruption stats. |
+| `resilience-example-vertical` | second advanced example | – | The same 6×5 grid, but 15 **vertical** links fail and the flows go from the top row to the bottom row. Horizontal links never fail. |
 
 ```bash
 ./ns3 run "resilience-example-scheduled --failureStart=10s --failureDuration=5s"
 ./ns3 run "resilience-example-scheduled --enableBackup=false"
 ./ns3 run "resilience-example-random --recoveryProbability=0.05 --RngRun=3"
+./ns3 run "resilience-example-vertical --numManagedLinks=25"
 ```
+
+With `--numManagedLinks=25`, every vertical link can fail. When all links between two rows are down at once, the grid splits and the packets that must cross that gap are lost.
 
 Each example has `--PrintHelp` to list all of its options.
 
@@ -164,7 +172,7 @@ The examples write these output files:
 
 - `<prefix>-events.csv`: one row per interface event. Columns: `time_s,module,event,node_id,peer_id,flow_id,value1,value2,unit,detail,interface_id,state,cause,disruption_ms`
 - `<prefix>-throughput.csv`: written by the scheduled example. Columns: `time_s,throughput_mbps`
-- `<prefix>-summary.csv`: written by the random example. It gets one row per run, appended.
+- `<prefix>-summary.csv`: written by both grid examples, with the same columns. It gets one row per run, appended.
 
 For plots and validation sweeps, see [tools/](tools/).
 
@@ -172,7 +180,7 @@ For plots and validation sweeps, see [tools/](tools/).
 
 These outputs come from ns-3.46.1 (`default` build profile, seed 1) in WSL2 Ubuntu. The runs used `--outputPrefix` to write files into a separate folder, and the commands below are shown with the default prefix.
 
-**Tests:** all 9 test cases pass.
+**Tests:** the suite passes. This screenshot was taken before test T10 was added; the suite now has 10 test cases.
 
 ![Test results](doc/images/tests.png)
 
@@ -197,7 +205,7 @@ The same two runs plotted from `<prefix>-throughput.csv`. The red band is the ou
 |---|---|
 | FR-01 UP/DOWN state | `LinkAvailability`, `FailureController::GetCurrentState` |
 | FR-02 scheduled times | `ScheduledAvailabilityModel` (test SRS-T01) |
-| FR-03 stochastic model with ns-3 streams | `TwoStateAvailabilityModel::AssignStreams` (tests SRS-T03, SRS-T04) |
+| FR-03 stochastic model with ns-3 streams | `TwoStateAvailabilityModel::AssignStreams` (tests SRS-T03, SRS-T04, T10) |
 | FR-04 apply state to interfaces | `FailureController::ApplyState` with `Ipv4::SetDown`/`SetUp` (test SRS-T02) |
 | FR-05 LinkDown/LinkUp traces | `FailureController` trace sources (test SRS-T05) |
 | FR-06 disruption, failures, recoveries | `ResilienceMetricsCollector` (test SRS-T05) |
