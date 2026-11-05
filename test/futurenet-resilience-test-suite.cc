@@ -505,6 +505,67 @@ class NodeFailureTestCase : public TestCase
 
 /**
  * @ingroup futurenet-resilience
+ * T10: with RecoveryProbability 1, every outage lasts exactly one
+ * EvaluationInterval (the expected mean outage T / q with q = 1), and the
+ * steady-state availability follows q / (p + q).
+ */
+class OneIntervalOutageTestCase : public TestCase
+{
+  public:
+    OneIntervalOutageTestCase()
+        : TestCase("T10 recovery probability 1 gives one-interval outages")
+    {
+    }
+
+  private:
+    void DoRun() override
+    {
+        const Time interval = MilliSeconds(500);
+        Ptr<TwoStateAvailabilityModel> model = CreateObject<TwoStateAvailabilityModel>();
+        model->SetAttribute("EvaluationInterval", TimeValue(interval));
+        model->SetAttribute("FailureProbability", DoubleValue(0.25));
+        model->SetAttribute("RecoveryProbability", DoubleValue(1.0));
+        NS_TEST_ASSERT_MSG_EQ_TOL(model->GetSteadyStateAvailability(),
+                                  0.8,
+                                  1e-12,
+                                  "q / (p + q) with p = 0.25, q = 1");
+
+        model->AssignStreams(11);
+        model->SetStateChangeCallback(MakeCallback(&OneIntervalOutageTestCase::Record, this));
+        model->Start();
+        Simulator::Stop(Seconds(500));
+        Simulator::Run();
+
+        NS_TEST_ASSERT_MSG_GT(m_outages.size(), 0U, "Expected some outages");
+        for (const Time& outage : m_outages)
+        {
+            NS_TEST_EXPECT_MSG_EQ(outage, interval, "Outage longer than one interval");
+        }
+        Simulator::Destroy();
+    }
+
+    /**
+     * Model callback: record the length of each outage.
+     * @param state new state
+     */
+    void Record(LinkAvailability state)
+    {
+        if (state == LinkAvailability::DOWN)
+        {
+            m_downSince = Simulator::Now();
+        }
+        else
+        {
+            m_outages.push_back(Simulator::Now() - m_downSince);
+        }
+    }
+
+    Time m_downSince;            //!< start of the current outage
+    std::vector<Time> m_outages; //!< lengths of the finished outages
+};
+
+/**
+ * @ingroup futurenet-resilience
  * Test suite for the futurenet-resilience module.
  */
 class FuturenetResilienceTestSuite : public TestSuite
@@ -522,6 +583,7 @@ class FuturenetResilienceTestSuite : public TestSuite
         AddTestCase(new MetricsTestCase(Seconds(0)), TestCase::Duration::QUICK);
         AddTestCase(new MetricsTestCase(Seconds(1)), TestCase::Duration::QUICK);
         AddTestCase(new NodeFailureTestCase, TestCase::Duration::QUICK);
+        AddTestCase(new OneIntervalOutageTestCase, TestCase::Duration::QUICK);
     }
 };
 
