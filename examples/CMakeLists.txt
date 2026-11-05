@@ -18,3 +18,14 @@ build_lib_example(
     ${libinternet}
     ${libflow-monitor}
 )
+
+build_lib_example(
+  NAME resilience-example-vertical
+  SOURCE_FILES resilience-example-vertical.cc
+  LIBRARIES_TO_LINK
+    ${libfuturenet-resilience}
+    ${libpoint-to-point}
+    ${libapplications}
+    ${libinternet}
+    ${libflow-monitor}
+)

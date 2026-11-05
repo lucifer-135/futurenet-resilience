@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plot link outages of resilience-example-random.
+"""Plot link outages of resilience-example-random or resilience-example-vertical.
 
 Usage: python3 plot-random.py <prefix>
 Reads <prefix>-events.csv and <prefix>-summary.csv, writes <prefix>-outages.png.
